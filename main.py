@@ -1,156 +1,195 @@
-#discord.__version__ = 1.0.0a
-client_id_file 		= open("./private_data/client_id.txt", "r")
-token_file 			= open("./private_data/token.txt", "r")
-server_id_file 		= open("./private_data/my_server_id.txt", "r")
-
-client_id 		= int(client_id_file.read())
-server_id 		= int(server_id_file.read())
-
-token 			= token_file.read()
-permissions 	= 68608
-
-# https://discordapp.com/oauth2/authorize?client_id={CLIENT_ID}&scope=bot&permissions={PERMISSIONSINT}
-add_to_server_url = f"https://discordapp.com/oauth2/authorize?client_id={client_id}&scope=bot&permissions={permissions}"
-
-import discord
-import currency_mongo
+# Main execution file
+# This file contains all function definitions for the tip bot
 import helpers
+import currency_mongo
+import discord
+import random
+'''
+Load various data that we need to run the bot.
 
-helpers.log(add_to_server_url)
+1. `client_id` is our Discord Application ID
+2. `token_file` is our LNPay token
+3. `server_id_file` is our Server ID from Discord
+
+'''
+client_id_file = open("./private_data/client_id.txt", "r")
+token_file = open("./private_data/token.txt", "r")
+server_id_file = open("./private_data/my_server_id.txt", "r")
+
+client_id = int(client_id_file.read())
+server_id = int(server_id_file.read())
+
+token = token_file.read()
+permissions = 67584
+
+add_to_server_url = f"https://discordapp.com/oauth2/authorize?client_id={client_id}&scope=bot&permissions={permissions}"
 
 # initiates client
 client = discord.Client()
 mongo_currency = currency_mongo.Currency()
 
+'''
+Absolutely not necessary, but it's a lot of fun - the array
+and boolean below will send a gif whenever someone is tipped.
+'''
+tip_gifs = [
+	"https://media.giphy.com/media/l3q2wJsC23ikJg9xe/giphy.gif",
+	"https://media.giphy.com/media/BYoRqTmcgzHcL9TCy1/giphy.gif",
+	"https://media.giphy.com/media/I1WiaoKFdWcpaAp1Z7/giphy.gif",
+	"https://media.giphy.com/media/h0MTqLyvgG0Ss/giphy.gif",
+	"https://media.giphy.com/media/3kD49hW8Cpz92rpJxX/giphy.gif",
+	"https://media.giphy.com/media/eewYSr7s7utOM/giphy.gif",
+	"https://media.giphy.com/media/69v2l3Mx3VHZY2MTmO/giphy.gif",
+	"https://media.giphy.com/media/ZO8z7Pb7R08b4EZuYH/giphy.gif",
+	"https://media.giphy.com/media/8qgKKgu42TYZP93Z4u/giphy.gif",
+	"https://media.giphy.com/media/7RDFd7vrISPu0/giphy.gif",
+	"https://media.giphy.com/media/l41lR76EVnUedm40g/giphy.gif",
+	"https://media.giphy.com/media/MFsqcBSoOKPbjtmvWz/giphy.gif"
+]
+
+show_tip_gif = True
+
 @client.event 	# decorator/wrapper
 async def on_ready():
-	pass
-	#global mongo_currency
+    pass
 
-	#mongo_currency = currency.Currency()
-
+# Handle any messages sent on the server
 @client.event
 async def on_message(message):
-	#print(f"{message} : #{message.channel} : {message.author} : {message.content}")
-	server_id = message.guild.id
-	server_name = message.guild.name
-	member_id = message.author.id
-	member_name = message.author.name
+    # print(f"{message} : #{message.channel} : {message.author} : {message.content}")
+    helpers.log(message)
+    member_id = message.author.id
+    member_name = message.author.name
+    server_id = ''
+    server_name = ''
+    is_direct_message = True
 
-	if "!btctip" not in message.content:
-		return
+    if message.guild and message.guild.id:
+        is_direct_message = False
+        server_id = message.guild.id
+        server_name = message.guild.name
 
-	helpers.log(f"\n-> message: {message.content} |||| server_id: {server_id} | server_name: {server_name} | member_id: {member_id} | member_name: {member_name}\n")
+    if "!btctip" not in message.content:
+        return
 
-	mongo_currency.check(server_id, server_name, member_id, member_name)
+    helpers.log(
+        f"\n-> message: {message.content} |||| server_id: {server_id} | server_name: {server_name} | member_id: {member_id} | member_name: {member_name}\n")
 
-	if "!btctip xxstop" in message.content.lower():
-		helpers.log("byeeee", 'critical')
-		await client.close()
-		return
-	elif "!btctip show my balance" in message.content.lower() and message.author.name!="bitcoin-tip-bot":
+    mongo_currency.check(server_id, server_name, member_id, member_name)
+
+    if "!btctip balance" in message.content.lower() and message.author.name != "bitcoin-tipbot":
+        helpers.log("SENDING USER BALANCE????")
 		#member_id = message.author.id
+		# Balance is personal info - send to the user via DM instead of to the channel
+        bal = mongo_currency.get_balance(member_id)
+        await message.author.send(f"Your tip wallet balance is {bal} sats")
+        return
+    elif "!btctip help" in message.content.lower() and message.author.name != "bitcoin-tip-bot":
+        await message.author.send("I'm a Bitcoin bot you can use to tip bad-lab members Bitcoin via the Lightning Network.\n\nHere's a list of what I can do:\n\nTo tip someone: `!btctip <@username> <amt-in-sats>` - will tip a recipient Bitcoin via the LN.\nFor example: `!btctip @satoshiops#2798 50`.\nThis will tip 50 sats from your wallet to satoshiop's wallet.\n\nTo see your balance: `!btctip balance`. This will send you a DM with your balance in your tipping wallet, in sats.\n\nTo withdraw your balance: `!btctip withdraw <invoice>`. Make sure you paste in a Lightning Network invoice! Most of the time they start with `lnbc`.\n\nTo deposit sats into your tipping wallet: `!btctip deposit <amount in sats>`.\nFor example, running `!btctip deposit 2000` will generate an invoice on the lightning network that you can pay to. These sats will then go into your tipping wallet. Please note it may take up to 1 minute for your balance to update via our database.\n\nGot any questions? Ask one of the mods and we'll be happy to help!")
+        return
 
-		bal = mongo_currency.get_balance(member_id)
-		await message.channel.send(f"you have {bal}sats")
-		return
-	elif "!btctip help" in message.content.lower() and message.author.name!="bitcoin-tip-bot" :
-		await message.channel.send("hey hey heyyyyy I'm a bitcoin bot you can use to tip people within this server with some bitcoin.\n\nTo send money:`!btctip <mention-username-of-receiver> <amt-in-satoshi>`\nExample: `!btctip @ParmuSingh#5099 50` This will tip 50 satoshis from your wallet to ParmuSingh's wallet.\n\nTo see your balance:\n`!btctip show my balance`\n\nTo withdraw your balance:\n`!btctip withdraw <invoice>`\n\nTo deposit:\n`!btctip deposit 2000`, bot will return an invoice of 2000 satoshis that you can pay to deposit. It takes 1 minute for it update.\n\n\n1 satoshi is 0.00000001 bitcoin")
-		return
+    elif "!btctip withdraw" in message.content.lower() and message.author.name != "bitcoin-tip-bot":
+        try:
+            withdrawer_id = member_id
+            withdrawer_name = member_name
 
-	elif "!btctip withdraw" in message.content.lower() and message.author.name!="bitcoin-tip-bot":
-		try:
+            words = message.content.lower().split(' ')
+            for i in range(len(words)):
+                if words[i] == "!btctip" and words[i+1] == "withdraw":
+                    pay_req = words[i+2]
+                    break
+                    # not returning if invalid after invoke command cuz it raises exception and program goes on
 
-			withdrawer_id = member_id
-			withdrawer_name = member_name
+            #result = mongo_currency.get_amount_from_payreq(pay_req)
+            result = mongo_currency.withdraw_pay_invoice(
+                server_id, server_name, withdrawer_id, withdrawer_name, pay_req)
 
-			words = message.content.lower().split(' ')
-			for i in range(len(words)):
-				if words[i] == "!btctip" and words[i+1] == "withdraw":
-					pay_req = words[i+2]
-					break
-					# not returning if invalid after invoke command cuz it raises exception and program goes on
+            await message.author.send(result)
 
-			#result = mongo_currency.get_amount_from_payreq(pay_req)
-			result = mongo_currency.withdraw_pay_invoice(server_id, server_name, withdrawer_id, withdrawer_name, pay_req)
+        except Exception as e:
+            helpers.log(e, 'error')
+            await message.channel.send("ay check again")
+            return
 
-			await message.channel.send(result)
+    elif "!btctip deposit" in message.content.lower() and message.author.name != "bitcoin-tip-bot":
+        try:
 
-		except Exception as e:
-			helpers.log(e, 'error')
-			await message.channel.send("ay check again")
-			return
+            depositor_id = member_id
+            depositor_name = member_name
 
-	elif "!btctip deposit" in message.content.lower() and  message.author.name!="bitcoin-tip-bot":
-		try:
+            words = message.content.lower().split(' ')
+            for i in range(len(words)):
+                if words[i] == "!btctip" and words[i+1] == "deposit":
+                    amount = words[i+2]
+                    break
+                    # not returning if invalid after invoke command cuz it raises exception and program goes on
 
-			depositor_id = member_id
-			depositor_name = member_name
+            invoice = mongo_currency.deposit_get_payreq(
+                server_id, server_name, depositor_id, depositor_name, amount)
 
-			words = message.content.lower().split(' ')
-			for i in range(len(words)):
-				if words[i] == "!btctip" and words[i+1] == "deposit":
-					amount = words[i+2]
-					break
-					# not returning if invalid after invoke command cuz it raises exception and program goes on
+			# Create QR code of invoice as well
+            invoiceQr = helpers.invoice_to_qrcode(invoice)
+            await message.author.send(f"Please send your sats to this invoice:\n\n{invoice}\n\nFeel free to scan the QR code below as well instead of copy/pasting")
+            await message.author.send(file=discord.File(fp=invoiceQr, filename="image.png"))
 
-			invoice = mongo_currency.deposit_get_payreq(server_id, server_name, depositor_id, depositor_name, amount)
-			await message.channel.send(invoice)
+        except Exception as e:
+            helpers.log(e, 'error')
+            await message.channel.send("ay check again")
+            return
 
-		except Exception as e:
-			helpers.log(e, 'error')
-			await message.channel.send("ay check again")
-			return
+    elif "!btctip" in message.content.lower() and message.author.name != "bitcoin-tip-bot":
+        try:
+            words = message.content.lower().split(' ')
 
-	elif "!btctip" in message.content.lower() and message.author.name!="bitcoin-tip-bot":
-		try:
-			words = message.content.lower().split(' ')
+            for i in range(len(words)):
+                if words[i] == "!btctip":
+                    recipient = words[i+1]
+                    amount = words[i+2]
+                    if amount == '':  # sometimes mentioning user adds another empty char which could fuck things up so I'm removing any empty chars registered as words
+                        amount = words[i+3]
+                    break
+                    # not returning if invalid after invoke command cuz it raises exception and program goes on
 
-			for i in range(len(words)):
-				if words[i] == "!btctip":
-					recipient = words[i+1]
-					amount = words[i+2]
-					if amount == '': # sometimes mentioning user adds another empty char which could fuck things up so I'm removing any empty chars registered as words
-						amount = words[i+3]
-					break
-					# not returning if invalid after invoke command cuz it raises exception and program goes on
+            sender_id = member_id
+            sender_name = member_name
 
-			sender_id = member_id
-			sender_name = member_name
+            if '!' in recipient:  # desktop client
+                recipient_id = int(recipient.split('!')[1][: -1])
+            else:  # mobile client
+                recipient_id = int(recipient.split('@')[1][: -1])
 
-			if '!' in recipient: # desktop client
-				recipient_id = int(recipient.split('!')[1][: -1])
-			else: # mobile client
-				recipient_id = int(recipient.split('@')[1][: -1])
+            recipient_name = await client.fetch_user(recipient_id)
+            recipient_name = str(recipient_name).split('#')[0]
 
-			recipient_name = await client.fetch_user(recipient_id)
-			recipient_name = str(recipient_name).split('#')[0]
+            mongo_currency.check(server_id, server_name,
+                                 recipient_id, recipient_name)
 
-			mongo_currency.check(server_id, server_name, recipient_id, recipient_name)
+            helpers.log(
+                f"sender_name = {sender_name} | sender_id = {sender_id} | recipient_name = {recipient_name} | recipient_id = {recipient_id}")
 
-			helpers.log(f"sender_name = {sender_name} | sender_id = {sender_id} | recipient_name = {recipient_name} | recipient_id = {recipient_id}")
+            if int(amount) <= 0:
+                await message.channel.send("no.")
+                return
 
-			if int(amount) <= 0:
-				await message.channel.send("no.")
-				return
+            if sender_id == recipient_id:
+                await message.channel.send("why would you tip yourself...?")
+                return
 
-			if sender_id == recipient_id:
-				await message.channel.send("why would you tip yourself...?")
-				return
+            result = mongo_currency.send_money(sender_id, recipient_id, amount)
 
-			result = mongo_currency.send_money(sender_id, recipient_id, amount)
+            if result == "not enough balance":
+                await message.channel.send(result)
+                return
 
-			if result == "not enough balance":
-				await message.channel.send(result)
-				return
+            if result:
+                await message.channel.send(f"Check it out, <@{sender_id}> just sent {amount} sats to <@{recipient_id}>!")
+                if show_tip_gif:
+                    await message.channel.send(random.choice(tip_gifs))
+            else:
+                await message.channel.send(f"problem: {result}")
 
-			if result:
-				await message.channel.send(f"hey heyy heyyy\n{amount} satoshis sent to {recipient_name}")
-			else:
-				await message.channel.send(f"problem: {result}")
-
-		except Exception as e:
-			helpers.log(e, 'error')
-			await message.channel.send("ay check again")
+        except Exception as e:
+            helpers.log(e, 'error')
+            await message.channel.send("ay check again")
 
 client.run(token)

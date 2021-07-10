@@ -67,7 +67,9 @@ class Currency:
 		wallet = LNPayWallet(wallet["access_keys"]["Wallet Read"][0])
 		info = wallet.get_info()
 
-		info_example = {
+		'''
+		Example response from LNPay
+		{
 			'id': 'wal_gC47E2xGyXclhj',
 			'created_at': 1611474292,
 			'updated_at': 1611474292,
@@ -79,6 +81,7 @@ class Currency:
 				'display_name': 'Active'
 			}
 		}
+		'''
 
 		return info['balance']
 		"""
@@ -147,7 +150,7 @@ class Currency:
 		depositor_wallet = LNPayWallet(self.db['users'].find_one({'user_id': depositor_id})['wallet']["access_keys"]["Wallet Invoice"][0])
 		invoice_params = {
 			'num_satoshis': amount,
-			'memo': 'depositing sats in discord',
+			'memo': 'Top up your BAD-labs tipping account',
 			'passThru': {'server_id': server_id, 'server_name': server_name, 'depositor_id': depositor_id, 'depositor_name': depositor_name, 'app': 'discord-bot'}
 		}
 		invoice = depositor_wallet.create_invoice(invoice_params)['payment_request']
@@ -156,27 +159,13 @@ class Currency:
 	def withdraw_pay_invoice(self, server_id, server_name, withdrawer_id, withdrawer_name, payreq):
 
 		withdrawer_id = str(withdrawer_id)
-		"""
-		withdrawer_balance = self.get_balance(withdrawer_id)
-
-		amount = self.get_amount_from_payreq(payreq)
-
-		if amount == None:
-			return "Cannot pay any amount invoice. You have to mention amount in invoice."
-		amount = int(amount)
-
-		# check if user has the amount
-		if amount > withdrawer_balance or withdrawer_balance <= 0:
-			helpers.log(f"not enough balance")
-			return "Not enough balance"
-		"""
+		
 		# transfer
 		withdrawer_wallet = LNPayWallet(self.db['users'].find_one({'user_id': withdrawer_id})['wallet']["access_keys"]["Wallet Admin"][0])
 		invoice_params = {
 		    'payment_request': payreq,
 			'passThru': {'app': 'discord-bot'}
 		}
-		print(invoice_params)
 		pay_result = withdrawer_wallet.pay_invoice(invoice_params)
 		helpers.log(pay_result)
 
@@ -185,9 +174,9 @@ class Currency:
 		if 'lnTx' in pay_result.keys():
 			if pay_result['lnTx']['settled'] == 1:
 				settled = True
+				amount = pay_result['lnTx']['num_satoshis']
 				helpers.log(f"\nwithdrawl by {withdrawer_id}: {amount} sats")
-				self.update_balance(withdrawer_id, -amount)
-				return "sats withdrawn"
+				return "Your sats have been withdrawn!"
 
 		return "payment unsuccessful."
 

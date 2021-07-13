@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  # Tipping bot
+  badlabdiscordtipbot:
+    image: badlabdiscordtipbot
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+  # Mongo
+  mongo:
+    image: "mongo"

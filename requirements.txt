@@ -1,7 +1,5 @@
-discord.py==1.7.3
-qrcode==7.1
-lnpay_py==0.1.0
-requests==2.24.0
-pymongo==3.11.4
-discord==1.7.3
-Flask==2.0.1
+discord.py
+qrcode
+requests
+pymongo
+# Flask

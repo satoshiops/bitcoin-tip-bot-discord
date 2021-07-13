@@ -12,6 +12,7 @@ Load various data that we need to run the bot.
 3. `server_id_file` is our Server ID from Discord
 
 '''
+
 client_id_file = open("./private_data/client_id.txt", "r")
 token_file = open("./private_data/token.txt", "r")
 server_id_file = open("./private_data/my_server_id.txt", "r")
@@ -78,11 +79,9 @@ async def on_message(message):
     mongo_currency.check(server_id, server_name, member_id, member_name)
 
     if "!btctip balance" in message.content.lower() and message.author.name != "bitcoin-tipbot":
-        helpers.log("SENDING USER BALANCE????")
-		#member_id = message.author.id
 		# Balance is personal info - send to the user via DM instead of to the channel
         bal = mongo_currency.get_balance(member_id)
-        await message.author.send(f"Your tip wallet balance is {bal} sats")
+        await message.author.send(f"Your tip wallet has {bal} sats")
         return
     elif "!btctip help" in message.content.lower() and message.author.name != "bitcoin-tip-bot":
         await message.author.send("I'm a Bitcoin bot you can use to tip bad-lab members Bitcoin via the Lightning Network.\n\nHere's a list of what I can do:\n\nTo tip someone: `!btctip <@username> <amt-in-sats>` - will tip a recipient Bitcoin via the LN.\nFor example: `!btctip @satoshiops#2798 50`.\nThis will tip 50 sats from your wallet to satoshiop's wallet.\n\nTo see your balance: `!btctip balance`. This will send you a DM with your balance in your tipping wallet, in sats.\n\nTo withdraw your balance: `!btctip withdraw <invoice>`. Make sure you paste in a Lightning Network invoice! Most of the time they start with `lnbc`.\n\nTo deposit sats into your tipping wallet: `!btctip deposit <amount in sats>`.\nFor example, running `!btctip deposit 2000` will generate an invoice on the lightning network that you can pay to. These sats will then go into your tipping wallet. Please note it may take up to 1 minute for your balance to update via our database.\n\nGot any questions? Ask one of the mods and we'll be happy to help!")
@@ -108,7 +107,7 @@ async def on_message(message):
 
         except Exception as e:
             helpers.log(e, 'error')
-            await message.channel.send("ay check again")
+            await message.author.send("Sorry, there was an error on our end. Please try again. If the issue persists, please DM one of the mods!")
             return
 
     elif "!btctip deposit" in message.content.lower() and message.author.name != "bitcoin-tip-bot":
@@ -134,7 +133,7 @@ async def on_message(message):
 
         except Exception as e:
             helpers.log(e, 'error')
-            await message.channel.send("ay check again")
+            await message.author.send("Sorry, there was an error on our end. Please try again. If the issue persists, please DM one of the mods!")
             return
 
     elif "!btctip" in message.content.lower() and message.author.name != "bitcoin-tip-bot":
@@ -168,21 +167,21 @@ async def on_message(message):
                 f"sender_name = {sender_name} | sender_id = {sender_id} | recipient_name = {recipient_name} | recipient_id = {recipient_id}")
 
             if int(amount) <= 0:
-                await message.channel.send("no.")
+                await message.author.send("You can't send negative sats!")
                 return
 
             if sender_id == recipient_id:
-                await message.channel.send("why would you tip yourself...?")
+                await message.author.send("You can't tip yourself!")
                 return
 
             result = mongo_currency.send_money(sender_id, recipient_id, amount)
 
             if result == "not enough balance":
-                await message.channel.send(result)
+                await message.author.send("Hey there! We tried to send your payment but you don't have enough sats!")
                 return
 
             if result:
-                await message.channel.send(f"Check it out, <@{sender_id}> just sent {amount} sats to <@{recipient_id}>!")
+                await message.channel.send(f"Check it out! <@{sender_id}> just sent {amount} sats to <@{recipient_id}>!")
                 if show_tip_gif:
                     await message.channel.send(random.choice(tip_gifs))
             else:

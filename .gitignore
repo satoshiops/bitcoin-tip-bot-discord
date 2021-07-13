@@ -2,5 +2,6 @@
 **/archives
 **/private_data
 **/__pycache__
+.vscode
 deploy.txt
 notes.txt

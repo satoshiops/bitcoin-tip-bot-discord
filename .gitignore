@@ -3,5 +3,6 @@
 **/private_data
 **/__pycache__
 .vscode
+**/data
 deploy.txt
 notes.txt

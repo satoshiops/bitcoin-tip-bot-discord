@@ -1,11 +1,11 @@
 import logging
-import lnpay_py
+import lnpay as LNPay
 import qrcode
 import io
 
 lnpay_api_key = open('./private_data/lnpay_api_key.txt',
                      'r').read().split('\n')[0]
-lnpay_py.initialize(lnpay_api_key)
+LNPay.initialize(lnpay_api_key)
 
 
 def log(msg, type='info'):
@@ -24,7 +24,7 @@ def create_wallet(name):
     wallet_params = {
         'user_label': name
     }
-    new_wallet = lnpay_py.create_wallet(wallet_params)
+    new_wallet = LNPay.create_wallet(wallet_params)
     log("new wallet created: ")
     print(new_wallet)
 

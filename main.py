@@ -17,6 +17,8 @@ client_id_file = open("./private_data/client_id.txt", "r")
 token_file = open("./private_data/token.txt", "r")
 server_id_file = open("./private_data/my_server_id.txt", "r")
 
+print(client_id_file)
+
 client_id = int(client_id_file.read())
 server_id = int(server_id_file.read())
 
@@ -25,10 +27,8 @@ permissions = 67584
 
 add_to_server_url = f"https://discordapp.com/oauth2/authorize?client_id={client_id}&scope=bot&permissions={permissions}"
 
-# initiates client
+# Initialize Discord client and MongoDB connection
 client = discord.Client()
-mongo_currency = currency_mongo.Currency()
-
 '''
 Absolutely not necessary, but it's a lot of fun - the array
 and boolean below will send a gif whenever someone is tipped.
@@ -57,6 +57,7 @@ async def on_ready():
 # Handle any messages sent on the server
 @client.event
 async def on_message(message):
+    mongo_currency = currency_mongo.Currency()
     # print(f"{message} : #{message.channel} : {message.author} : {message.content}")
     helpers.log(message)
     member_id = message.author.id

@@ -1,6 +1,6 @@
 from pymongo import MongoClient
-import lnpay_py
-from lnpay_py.wallet import LNPayWallet
+import lnpay
+LNPayWallet = lnpay.LNPayWallet
 import requests
 from requests.auth import HTTPBasicAuth
 import json
@@ -8,13 +8,13 @@ import helpers
 
 class Currency:
 	def __init__(self):
-		self.client = MongoClient("mongodb://localhost:27017")
+		self.client = MongoClient("mongodb://mongo:27017/db")
 		self.db = self.client['btc-discord-bot']
 
 		self.lnpay_api_key = open('./private_data/lnpay_api_key.txt', 'r').read().split('\n')[0]#[2: len(self.lnpay_api_key)-2]
 		self.lnpay_wallet_key_invoice = open('./private_data/lnpay_wallet_key_invoice.txt', 'r').read().split('\n')[0]#[2: len(self.lnpay_wallet_key_invoice)-2]
 		self.lnpay_wallet_key_admin = open('./private_data/lnpay_wallet_key_admin.txt', 'r').read().split('\n')[0]
-		lnpay_py.initialize(self.lnpay_api_key)
+		lnpay.initialize(self.lnpay_api_key)
 
 		'''
 		self.servers = [] #self.db.list_collection_names()
@@ -49,16 +49,6 @@ class Currency:
 
 			# insert user
 			users_dbcol.insert_one(user)
-
-		'''
-		# check if server is linked to user
-		users_dbcol = self.db['users']
-		user = users_dbcol.find_one('user_id': member_id)
-		if server_id not in user['servers']:
-			user['server'].append(server_id)
-			self.db['users'].update_one({'user_id': member_id}, {"$set": user})
-		'''
-
 
 	def get_balance(self, member_id):
 		member_id = str(member_id)

@@ -3,4 +3,3 @@ qrcode
 requests
 pymongo
 pillow
-# Flask

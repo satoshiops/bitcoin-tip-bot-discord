@@ -26,22 +26,6 @@ def create_wallet(name):
     }
     new_wallet = LNPay.create_wallet(wallet_params)
     log("new wallet created: ")
-    print(new_wallet)
-
-    example_value_of_new_wallet = {
-        'id': 'wal_', 'created_at': 1611472924, 'updated_at': 1611472924,
-        'user_label': 'test-wallet-created-from-lnpay-py', 'balance': 0,
-        'statusType': {
-            'type': 'wallet',
-            'name': 'active',
-            'display_name': 'Active'
-        },
-        'access_keys': {
-            'Wallet Admin': ['waka_'],
-            'Wallet Invoice': ['waki_'],
-            'Wallet Read': ['wakr_']
-        }
-    }
 
     return new_wallet
 

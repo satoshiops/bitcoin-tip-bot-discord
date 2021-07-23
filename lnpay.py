@@ -2,7 +2,6 @@ import json
 import requests
 
 __version__ = '0.1.1'
-
 __VERSION__ = 'py' + __version__
 __ENDPOINT_URL__ = 'https://api.lnpay.co/v1/'
 __DEFAULT_WAK__ = ''
@@ -171,7 +170,6 @@ class LNPayWallet:
         Generated lnurl object.
         """
         return get_request('wallet/{}/lnurl/withdraw?num_satoshis={}'.format(self.access_key, params['num_satoshis']))
-
 
 class LNPayLnTx:
     def __init__(self, tx_id):

@@ -8,7 +8,10 @@ import helpers
 
 class Currency:
 	def __init__(self):
+		# Docker
 		self.client = MongoClient("mongodb://mongo:27017/db")
+		# Localhost connection
+		# self.client = MongoClient("mongodb://localhost:27017")
 		self.db = self.client['btc-discord-bot']
 
 		self.lnpay_api_key = open('./private_data/lnpay_api_key.txt', 'r').read().split('\n')[0]#[2: len(self.lnpay_api_key)-2]

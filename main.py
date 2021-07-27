@@ -14,6 +14,7 @@ token = token_file.read()
 permissions = 67584
 
 tipbot_name = "bad-lab-tipbot"
+# tipbot_name = "bad-tipbot"
 
 # add_to_server_url = f"https://discordapp.com/oauth2/authorize?client_id={client_id}&scope=bot&permissions={permissions}"
 
@@ -56,7 +57,6 @@ async def on_ready():
 async def on_message(message):
     mongo_currency = currency_mongo.Currency()
     # print(f"{message} : #{message.channel} : {message.author} : {message.content}")
-    helpers.log(message)
     member_id = message.author.id
     member_name = message.author.name
     server_id = ''
@@ -194,6 +194,6 @@ async def on_message(message):
 
         except Exception as e:
             helpers.log(e, 'error')
-            await message.channel.send("ay check again")
+            await message.channel.send("Sorry, it looks like I couldn't understand what you wanted. Please try again - if this issue persists, DM one of the mods and they'll patch me up right away!")
 
 client.run(token)

@@ -143,7 +143,7 @@ class Currency:
 		depositor_wallet = LNPayWallet(self.db['users'].find_one({'user_id': depositor_id})['wallet']["access_keys"]["Wallet Invoice"][0])
 		invoice_params = {
 			'num_satoshis': amount,
-			'memo': 'Top up your BAD-labs tipping account',
+			'memo': 'Top up your BAD Lab tipping account',
 			'passThru': {'server_id': server_id, 'server_name': server_name, 'depositor_id': depositor_id, 'depositor_name': depositor_name, 'app': 'discord-bot'}
 		}
 		invoice = depositor_wallet.create_invoice(invoice_params)['payment_request']
